@@ -1,0 +1,1132 @@
+<title>RewardRally Outbound Workflow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: a vertical stage timeline (stage, owner, HubSpot record), then a playbook of expandable how-to cards keyed to the same step letters. */
+:root {
+  --bg: #f6f5f9;
+  --surface: #ffffff;
+  --ink: #1d1a29;
+  --muted: #5d586e;
+  --line: #dcd8e6;
+  --accent: #5b3fc4;
+  --accent-soft: #ece7fb;
+  --hub: #b84f1c;
+  --hub-soft: #fbeee6;
+  --mail: #1f7a6a;
+  --mail-soft: #e3f3ef;
+  --warn: #8a5a00;
+  --warn-soft: #fff4d6;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15131c; --surface: #1e1b28; --ink: #ece9f5; --muted: #a49fb5; --line: #353046;
+    --accent: #a993f5; --accent-soft: #2a2342; --hub: #f0945f; --hub-soft: #3a2519;
+    --mail: #5cc9b2; --mail-soft: #17302b; --warn: #f2c35b; --warn-soft: #3a2f12; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15131c; --surface: #1e1b28; --ink: #ece9f5; --muted: #a49fb5; --line: #353046;
+  --accent: #a993f5; --accent-soft: #2a2342; --hub: #f0945f; --hub-soft: #3a2519;
+  --mail: #5cc9b2; --mail-soft: #17302b; --warn: #f2c35b; --warn-soft: #3a2f12; color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
+.wrap {
+  max-width: 1040px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 56px;
+  display: grid; gap: 44px;
+}
+header { display: grid; gap: 8px; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(28px, 5vw, 42px); line-height: 1.1; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 64ch; margin: 0; }
+h2 { font-family: var(--f-display); font-weight: 600; font-size: 22px; margin: 0; text-wrap: balance; }
+h3 { font-family: var(--f-display); font-weight: 600; font-size: 17px; margin: 0; }
+.sec { display: grid; gap: 16px; }
+.sec-head { display: grid; gap: 4px; }
+.sec-head p { margin: 0; color: var(--muted); font-size: 14px; max-width: 70ch; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+/* People */
+.people { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.person { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 4px; min-width: 0; }
+.person .who { font-weight: 600; }
+.person .role { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.person p { margin: 0; font-size: 13.5px; color: var(--muted); }
+
+/* Timeline */
+.phase { font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 14px 0 6px; border-bottom: 1px solid var(--line); }
+.timeline { display: grid; gap: 0; }
+.row { display: grid; grid-template-columns: 44px minmax(0, 1.25fr) minmax(0, .7fr) minmax(0, 1.2fr); gap: 16px; padding: 14px 0; border-bottom: 1px dashed var(--line); align-items: start; }
+.row .n { width: 32px; height: 32px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-family: var(--f-mono); font-size: 13px; display: grid; place-items: center; }
+.row .stage { display: grid; gap: 4px; min-width: 0; }
+.row .stage b { font-family: var(--f-display); font-weight: 600; font-size: 17px; line-height: 1.25; }
+.row .stage span { font-size: 14px; color: var(--muted); }
+.owner { display: flex; flex-wrap: wrap; gap: 6px; align-content: start; }
+.tag { font-family: var(--f-mono); font-size: 11.5px; padding: 3px 8px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
+.tag.tool { background: transparent; border: 1px solid var(--line); color: var(--muted); }
+.hubcell { background: var(--hub-soft); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; min-width: 0; }
+.hubcell .lbl { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--hub); }
+.hubcell ul { margin: 0; padding-left: 16px; font-size: 13.5px; display: grid; gap: 2px; }
+.hubcell .refs { display: flex; flex-wrap: wrap; gap: 6px; }
+.ref { font-family: var(--f-mono); font-size: 11px; color: var(--hub); text-decoration: none; border: 1px solid var(--hub); border-radius: 4px; padding: 1px 6px; }
+.ref:hover { background: var(--surface); }
+.colhead { display: grid; grid-template-columns: 44px minmax(0, 1.25fr) minmax(0, .7fr) minmax(0, 1.2fr); gap: 16px; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); padding-bottom: 4px; }
+
+/* Flowchart */
+.fcwrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 12px; }
+.fcwrap svg { display: block; width: 100%; min-width: 560px; max-width: 760px; height: auto; margin: 0 auto; }
+.fc-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; color: var(--muted); }
+.fc-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.fc-legend i { width: 14px; height: 10px; border-radius: 2px; border: 1.5px solid; display: inline-block; }
+.lg-act { background: var(--surface); border-color: var(--muted) !important; }
+.lg-hub { background: var(--hub-soft); border-color: var(--hub) !important; }
+.lg-dec { background: var(--accent-soft); border-color: var(--accent) !important; transform: rotate(45deg) scale(.8); }
+.lg-side { background: var(--bg); border-color: var(--line) !important; border-style: dashed !important; }
+.lg-mail { background: var(--mail-soft); border-color: var(--mail) !important; }
+.fc-act { fill: var(--surface); stroke: var(--muted); stroke-width: 1.5; }
+.fc-hub { fill: var(--hub-soft); stroke: var(--hub); stroke-width: 1.5; }
+.fc-dec { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
+.fc-side { fill: var(--bg); stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 5 4; }
+.fc-mail { fill: var(--mail-soft); stroke: var(--mail); stroke-width: 1.5; }
+.fc-line { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+.fc-head { fill: var(--muted); }
+.fc-t { fill: var(--ink); font-family: var(--f-body); font-size: 13.5px; text-anchor: middle; }
+.fc-ts { fill: var(--ink); font-family: var(--f-body); font-size: 13px; text-anchor: middle; }
+.fc-b { fill: var(--ink); font-family: var(--f-display); font-weight: 600; font-size: 14px; text-anchor: middle; }
+.fc-o { fill: var(--accent); font-family: var(--f-mono); font-size: 11.5px; text-anchor: middle; }
+.fc-yn { fill: var(--muted); font-family: var(--f-mono); font-size: 11.5px; }
+
+/* Stage map */
+.tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 14px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+tr:last-child td { border-bottom: 0; }
+td code, .pb code { font-family: var(--f-mono); font-size: 12.5px; background: var(--accent-soft); color: var(--accent); padding: 1px 5px; border-radius: 3px; }
+
+/* Playbook */
+.pb { display: grid; gap: 10px; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+details[open] { border-color: var(--hub); }
+summary { list-style: none; cursor: pointer; padding: 14px 16px; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+summary::-webkit-details-marker { display: none; }
+summary .k { width: 26px; height: 26px; border-radius: 6px; background: var(--hub-soft); color: var(--hub); font-family: var(--f-mono); font-size: 13px; display: grid; place-items: center; }
+summary .t { display: grid; gap: 2px; min-width: 0; }
+summary .t small { color: var(--muted); font-size: 13px; }
+summary .chev { color: var(--muted); transition: transform .15s; }
+details[open] summary .chev { transform: rotate(90deg); }
+.body { padding: 0 16px 18px 58px; display: grid; gap: 12px; font-size: 14.5px; }
+.body ol, .body ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.body p { margin: 0; }
+.fields { display: grid; grid-template-columns: minmax(120px, 190px) minmax(0, 1fr); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 13.5px; }
+.fields div { padding: 7px 10px; border-bottom: 1px solid var(--line); min-width: 0; }
+.fields div:nth-child(odd) { background: var(--bg); font-weight: 500; }
+.fields div:nth-last-child(-n+2) { border-bottom: 0; }
+.tip { background: var(--warn-soft); color: var(--ink); border-radius: 8px; padding: 10px 12px; font-size: 13.5px; }
+.tip b { color: var(--warn); }
+.template { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font-size: 13.5px; white-space: pre-wrap; font-family: var(--f-body); position: relative; }
+.copy { justify-self: start; font: 500 12.5px var(--f-body); background: var(--surface); color: var(--accent); border: 1px solid var(--accent); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+
+/* Email + checks */
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.panel.mailp { border-top: 3px solid var(--mail); }
+.panel.warnp { border-top: 3px solid var(--warn); }
+.panel ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; }
+.mini-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.chip { display: grid; gap: 2px; padding: 10px 14px; border-radius: 8px; background: var(--mail-soft); }
+.chip b { font-family: var(--f-display); font-weight: 600; font-size: 16px; }
+.chip span { font-size: 13px; color: var(--muted); }
+.to { color: var(--mail); font-family: var(--f-mono); }
+.note { font-size: 13.5px; color: var(--muted); margin: 0; }
+footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+
+@media (max-width: 760px) {
+  .colhead { display: none; }
+  .row { grid-template-columns: 36px minmax(0, 1fr); gap: 10px 12px; }
+  .row .owner, .row .hubcell { grid-column: 2; }
+  .row .n { width: 28px; height: 28px; font-size: 12px; }
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .body { padding-left: 16px; }
+  .fields { grid-template-columns: minmax(0, 1fr); }
+  .fields div:nth-child(odd) { border-bottom: 0; padding-bottom: 0; background: transparent; color: var(--muted); font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { summary .chev { transition: none; } }
+
+/* ===== Motion & interaction layer ===== */
+html { scroll-behavior: smooth; }
+h2[id], details[id] { scroll-margin-top: 96px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--surface); }
+
+/* Sticky nav */
+.topnav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: saturate(1.4) blur(10px); -webkit-backdrop-filter: saturate(1.4) blur(10px); border-bottom: 1px solid var(--line); }
+.topnav-inner { max-width: 1040px; margin: 0 auto; display: flex; align-items: center; gap: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 10px; }
+.brand { font-family: var(--f-display); font-weight: 700; font-size: 16px; color: var(--ink); text-decoration: none; white-space: nowrap; }
+.brand span { color: var(--accent); }
+.navlinks { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; min-width: 0; margin-left: auto; }
+.navlinks::-webkit-scrollbar { display: none; }
+.navlinks a { font-size: 13.5px; color: var(--muted); text-decoration: none; padding: 6px 10px; border-radius: 999px; white-space: nowrap; transition: background-color .2s, color .2s; }
+.navlinks a:hover { color: var(--ink); background: var(--bg); }
+.navlinks a.active { color: var(--accent); background: var(--accent-soft); font-weight: 500; }
+.scrollbar { height: 2px; background: transparent; }
+.scrollbar span { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, var(--accent), var(--hub)); transform-origin: 0 50%; transform: scaleX(0); }
+@media (max-width: 640px) { .brand { display: none; } .navlinks { margin-left: 0; } }
+
+/* Hero motion band */
+.hero-band { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 10px 4px; overflow: hidden; }
+.hero-band svg { display: block; width: 100%; height: auto; }
+.hb-track { stroke: var(--line); stroke-width: 4; stroke-linecap: round; }
+.hb-track-glow { stroke: var(--accent); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 0; opacity: .35; }
+.hb-st circle { fill: var(--surface); stroke: var(--muted); stroke-width: 2.5; }
+.hb-st.hub circle { stroke: var(--hub); fill: var(--hub-soft); }
+.hb-st.live circle { stroke: var(--mail); fill: var(--mail-soft); }
+.hb-l { fill: var(--ink); font-family: var(--f-display); font-weight: 600; font-size: 17px; text-anchor: middle; }
+.hb-s { fill: var(--muted); font-family: var(--f-mono); font-size: 12.5px; text-anchor: middle; }
+.hb-dot { fill: var(--accent); }
+.hb-dot.drop { fill: var(--muted); }
+.hb-dot.win { fill: var(--mail); }
+.hb-st circle { transform-box: fill-box; transform-origin: center; animation: hb-pulse 3.6s ease-in-out infinite; animation-delay: calc(var(--i) * .5s); }
+@keyframes hb-pulse { 0%, 70%, 100% { transform: scale(1); } 80% { transform: scale(1.14); } }
+.hb-track-glow { animation: hb-sweep 2.4s cubic-bezier(.6,.1,.2,1) .2s 1 both; }
+@keyframes hb-sweep { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+
+/* Reveal on scroll (content is visible at rest; this only plays a short rise) */
+.rv.in { animation: rise .7s cubic-bezier(.2,.7,.2,1) both; animation-delay: var(--rd, 0s); }
+@keyframes rise { from { opacity: .25; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+/* People cards */
+.person { transition: transform .25s ease, box-shadow .25s ease, border-color .25s; }
+.person:hover { transform: translateY(-3px); box-shadow: 0 10px 24px -14px color-mix(in srgb, var(--accent) 60%, transparent); border-color: var(--accent); }
+
+/* Flowchart interactive layout */
+.fc-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+.fc-panel { position: sticky; top: 84px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 12px; min-width: 0; box-shadow: 0 18px 40px -30px color-mix(in srgb, var(--ink) 60%, transparent); }
+.fc-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.stepper { display: flex; align-items: center; gap: 6px; }
+.count { font-family: var(--f-mono); font-size: 12px; color: var(--muted); min-width: 44px; text-align: center; font-variant-numeric: tabular-nums; }
+.btn { font: 500 13px var(--f-body); border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; padding: 7px 12px; display: inline-flex; align-items: center; gap: 6px; transition: transform .15s ease, background-color .2s, border-color .2s; }
+.btn:hover { border-color: var(--accent); }
+.btn:active { transform: scale(.96); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-icon { width: 32px; height: 32px; padding: 0; justify-content: center; font-size: 18px; line-height: 1; }
+.fc-progress { height: 4px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+.fc-progress span { display: block; height: 100%; width: 8.33%; background: var(--accent); border-radius: 4px; transition: width .5s cubic-bezier(.2,.7,.2,1); }
+.fc-card { display: grid; gap: 8px; }
+.fc-card.swap { animation: card-in .45s cubic-bezier(.2,.7,.2,1); }
+@keyframes card-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.fc-kicker { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.fc-card h3 { font-size: 19px; line-height: 1.25; }
+.fc-body { font-size: 14px; display: grid; gap: 8px; }
+.fc-body ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.fc-body p { margin: 0; }
+.fc-hub-line { background: var(--hub-soft); border-radius: 8px; padding: 8px 10px; font-size: 13.5px; }
+.fc-hub-line b { color: var(--hub); }
+.fc-branch { display: grid; gap: 6px; }
+.fc-branch div { border-radius: 8px; padding: 8px 10px; font-size: 13.5px; background: var(--bg); }
+.fc-branch .yes { border-left: 3px solid var(--mail); }
+.fc-branch .no { border-left: 3px solid var(--muted); }
+.fc-refs { display: flex; flex-wrap: wrap; gap: 6px; }
+.fc-refs a { font-size: 12.5px; text-decoration: none; color: var(--hub); border: 1px solid var(--hub); border-radius: 999px; padding: 3px 10px; transition: background-color .2s, color .2s; }
+.fc-refs a:hover { background: var(--hub); color: var(--surface); }
+.fc-hint { margin: 0; font-size: 12.5px; color: var(--muted); }
+
+/* Nodes */
+.node { cursor: pointer; outline: none; }
+.node > rect, .node > polygon { transition: stroke .25s, stroke-width .25s, filter .25s; }
+.node:hover > rect, .node:hover > polygon, .node:focus-visible > rect, .node:focus-visible > polygon { stroke: var(--accent); stroke-width: 2.5; }
+.node.on > rect, .node.on > polygon { stroke: var(--accent); stroke-width: 3; filter: drop-shadow(0 6px 14px color-mix(in srgb, var(--accent) 45%, transparent)); }
+.node.dim { opacity: .45; transition: opacity .3s; }
+.node { transition: opacity .3s; }
+.fc-dot { pointer-events: none; transition: transform .7s cubic-bezier(.5,.05,.2,1), opacity .3s; opacity: 0; }
+.fc-dot.show { opacity: 1; }
+.fc-dot-core { fill: var(--accent); }
+.fc-dot-ring { fill: none; stroke: var(--accent); stroke-width: 2; transform-box: fill-box; transform-origin: center; animation: ring 1.6s ease-out infinite; }
+@keyframes ring { from { transform: scale(.5); opacity: .9; } to { transform: scale(1.6); opacity: 0; } }
+
+/* Chart entrance: lines draw, nodes settle (resting state is fully drawn) */
+#fc-svg.play .fc-line { stroke-dasharray: 1; animation: draw .5s ease-out both; animation-delay: calc(var(--d) * .12s + .1s); }
+@keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+#fc-svg.play .node { animation: pop .5s cubic-bezier(.2,.8,.2,1.2) both; animation-delay: calc(var(--d) * .12s); transform-box: fill-box; transform-origin: center; }
+@keyframes pop { from { opacity: .2; transform: scale(.94); } to { opacity: 1; transform: none; } }
+
+/* Timeline progress rail */
+.timeline { position: relative; }
+.rail { position: absolute; left: 15px; top: 40px; bottom: 20px; width: 2px; background: var(--line); border-radius: 2px; }
+.rail span { display: block; width: 100%; height: 100%; background: linear-gradient(var(--accent), var(--hub)); transform-origin: 50% 0; transform: scaleY(0); border-radius: 2px; }
+.row .n { position: relative; z-index: 1; transition: background-color .35s, color .35s, transform .35s; }
+.row.lit .n { background: var(--accent); color: var(--surface); transform: scale(1.08); }
+.phase { padding-left: 56px; position: relative; z-index: 1; }
+.row { transition: background-color .3s; border-radius: 8px; }
+.row:hover { background: color-mix(in srgb, var(--accent-soft) 45%, transparent); }
+
+/* Stage table */
+tbody tr { cursor: pointer; transition: background-color .2s; }
+tbody tr:hover { background: var(--accent-soft); }
+tbody tr:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Playbook cards */
+details { transition: border-color .25s, box-shadow .25s; overflow: hidden; }
+details:hover { border-color: color-mix(in srgb, var(--hub) 50%, var(--line)); }
+details.flash { animation: flash 1.4s ease-out; }
+@keyframes flash { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--hub) 60%, transparent); } 40% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--hub) 25%, transparent); } 100% { box-shadow: 0 0 0 0 transparent; } }
+summary .chev { display: inline-block; transition: transform .3s cubic-bezier(.2,.7,.2,1); }
+.copy { transition: transform .15s, background-color .2s, color .2s; }
+.copy:hover { background: var(--accent); color: var(--surface); }
+.copy:active { transform: scale(.95); }
+.ref { transition: background-color .2s, color .2s, transform .15s; }
+.ref:hover { background: var(--hub); color: var(--surface); }
+
+/* Back to top */
+.totop { position: fixed; right: max(16px, calc(env(safe-area-inset-right, 0px) + 16px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); z-index: 15; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--accent); font-size: 18px; cursor: pointer; box-shadow: 0 8px 20px -10px color-mix(in srgb, var(--ink) 50%, transparent); opacity: 0; transform: translateY(12px); pointer-events: none; transition: opacity .3s, transform .3s; }
+.totop.show { opacity: 1; transform: none; pointer-events: auto; }
+
+@media (max-width: 860px) {
+  .fc-layout { grid-template-columns: minmax(0, 1fr); }
+  .fc-panel { top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); max-height: 46vh; overflow-y: auto; }
+}
+@media (max-width: 760px) {
+  .rail { left: 13px; }
+  .phase { padding-left: 46px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<nav class="topnav" aria-label="Sections">
+  <div class="topnav-inner">
+    <a class="brand" href="#top">RewardRally <span>Outbound</span></a>
+    <div class="navlinks">
+      <a href="#people" data-spy="people">Team</a>
+      <a href="#chart" data-spy="chart">Flowchart</a>
+      <a href="#flow" data-spy="flow">Stages</a>
+      <a href="#stages" data-spy="stages">Deal columns</a>
+      <a href="#howto" data-spy="howto">How-to</a>
+      <a href="#mail" data-spy="mail">Email &amp; rules</a>
+    </div>
+  </div>
+  <div class="scrollbar" aria-hidden="true"><span id="scrollbar-fill"></span></div>
+</nav>
+
+<div class="wrap" id="top">
+  <header>
+    <div class="eyebrow">RewardRally · Sales &amp; Marketing</div>
+    <h1>RewardRally Outbound Workflow</h1>
+    <p class="lede">From an Apollo lead to a live, billed customer: who owns each stage and exactly what to record in HubSpot. HubSpot is the single source of truth for every contact, brand note, task and deal.</p>
+  </header>
+
+  <div class="hero-band" aria-hidden="true">
+    <svg id="hero-svg" viewBox="0 0 900 128" xmlns="http://www.w3.org/2000/svg">
+      <line class="hb-track" x1="70" y1="48" x2="830" y2="48"/>
+      <line class="hb-track-glow" x1="70" y1="48" x2="830" y2="48" pathLength="1"/>
+      <g class="hb-stations">
+        <g class="hb-st" style="--i:0"><circle cx="70" cy="48" r="17"/><text class="hb-l" x="70" y="92">Apollo</text><text class="hb-s" x="70" y="110">leads</text></g>
+        <g class="hb-st" style="--i:1"><circle cx="260" cy="48" r="17"/><text class="hb-l" x="260" y="92">Skyfall</text><text class="hb-s" x="260" y="110">calls</text></g>
+        <g class="hb-st hub" style="--i:2"><circle cx="450" cy="48" r="17"/><text class="hb-l" x="450" y="92">HubSpot</text><text class="hb-s" x="450" y="110">MQL</text></g>
+        <g class="hb-st hub" style="--i:3"><circle cx="640" cy="48" r="17"/><text class="hb-l" x="640" y="92">Discovery</text><text class="hb-s" x="640" y="110">SQL</text></g>
+        <g class="hb-st live" style="--i:4"><circle cx="830" cy="48" r="17"/><text class="hb-l" x="830" y="92">Live</text><text class="hb-s" x="830" y="110">customer</text></g>
+      </g>
+      <g class="hb-dots">
+        <circle opacity="0" class="hb-dot drop" r="5"><animateMotion path="M70,48 H260" dur="1.8s" begin="0s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.1;.8;1" dur="1.8s" begin="0s" repeatCount="indefinite"/></circle>
+        <circle opacity="0" class="hb-dot drop" r="5"><animateMotion path="M70,48 H260" dur="1.8s" begin="0.9s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.1;.8;1" dur="1.8s" begin="0.9s" repeatCount="indefinite"/></circle>
+        <circle opacity="0" class="hb-dot drop" r="5"><animateMotion path="M70,48 H260" dur="1.8s" begin="0.45s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.1;.8;1" dur="1.8s" begin="0.45s" repeatCount="indefinite"/></circle>
+        <circle opacity="0" class="hb-dot" r="5"><animateMotion path="M70,48 H450" dur="3.6s" begin="0.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.05;.9;1" dur="3.6s" begin="0.2s" repeatCount="indefinite"/></circle>
+        <circle opacity="0" class="hb-dot" r="5"><animateMotion path="M70,48 H640" dur="5.4s" begin="1.1s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.04;.92;1" dur="5.4s" begin="1.1s" repeatCount="indefinite"/></circle>
+        <circle opacity="0" class="hb-dot win" r="6"><animateMotion path="M70,48 H830" dur="7.2s" begin="0.6s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.03;.94;1" dur="7.2s" begin="0.6s" repeatCount="indefinite"/></circle>
+      </g>
+    </svg>
+  </div>
+
+
+  <section class="sec" aria-labelledby="people">
+    <div class="sec-head"><h2 id="people">Who does what</h2></div>
+    <div class="people">
+      <div class="person"><span class="role">Junior Executives, outbound</span><span class="who">Pavithra &amp; Chrispin</span><p>Pull leads in Apollo, call through Skyfall, book discovery, handle all follow-ups, schedule onboarding, and run billing follow-ups.</p></div>
+      <div class="person"><span class="role">Discovery &amp; account lead</span><span class="who">Vaishnavi</span><p>Runs discovery, onboarding with the product team, and the regular performance reviews.</p></div>
+      <div class="person"><span class="role">Sales &amp; Marketing lead</span><span class="who">Felix</span><p>Kept in the loop on every discovery invite and every follow-up.</p></div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="chart">
+    <div class="sec-head">
+      <h2 id="chart">Flowchart</h2>
+      <p>The whole journey at a glance, with the three decision points that decide where a lead goes next.</p>
+    </div>
+    <div class="fc-legend" aria-hidden="true">
+      <span><i class="lg-act"></i>Team action</span>
+      <span><i class="lg-hub"></i>HubSpot update</span>
+      <span><i class="lg-dec"></i>Decision</span>
+      <span><i class="lg-side"></i>Other outcome</span>
+      <span><i class="lg-mail"></i>Email campaign</span>
+    </div>
+    <div class="fc-layout">
+    <div class="fcwrap">
+      <svg id="fc-svg" viewBox="0 0 700 1100" role="group" aria-labelledby="fc-title fc-desc" xmlns="http://www.w3.org/2000/svg">
+        <title id="fc-title">RewardRally outbound flowchart</title>
+        <desc id="fc-desc">Apollo leads are called on Skyfall, which keeps every disposition and recording. No pickup or no interest stays in Apollo. A call that shows interest is entered into HubSpot by hand as a company, contact and an MQL deal. If discovery is booked the deal moves to SQL and an invite goes out copying Vaishnavi and Felix; otherwise a follow-up call task is set. Vaishnavi runs discovery, Pavithra and Chrispin follow up, and on onboarding confirmation the deal goes Live with an onboarding meeting, then regular reviews and billing follow-ups. The same Apollo list is verified in Bouncer and sent through Brevo.</desc>
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path class="fc-head" d="M0,0 L10,5 L0,10 z"/>
+          </marker>
+        </defs>
+
+        <!-- connectors (drawn first, under the nodes) -->
+        <g class="fc-lines">
+          <line class="fc-line" pathLength="1" style="--d:1" x1="410" y1="49" x2="458" y2="49" marker-end="url(#ah)"/>
+          <line class="fc-line" pathLength="1" style="--d:1" x1="260" y1="78" x2="260" y2="108" marker-end="url(#ah)"/>
+          <line class="fc-line" pathLength="1" style="--d:2" x1="260" y1="168" x2="260" y2="188" marker-end="url(#ah)"/>
+          <line class="fc-line" pathLength="1" style="--d:3" x1="350" y1="230" x2="458" y2="230" marker-end="url(#ah)"/>
+          <line class="fc-line" pathLength="1" style="--d:3" x1="260" y1="270" x2="260" y2="298" marker-end="url(#ah)"/>
+          <line class="fc-line" pathLength="1" style="--d:4" x1="260" y1="374" x2="260" y2="394" marker-end="url(#ah)"/>
+          <line class="fc-line" pathLength="1" style="--d:5" x1="365" y1="436" x2="458" y2="436" marker-end="url(#ah)"/>
+          <line class="fc-line" pathLength="1" style="--d:5" x1="260" y1="476" x2="260" y2="504" marker-end="url(#ah)"/>
+          <line class="fc-line" pathLength="1" style="--d:6" x1="260" y1="580" x2="260" y2="604" marker-end="url(#ah)"/>
+          <line class="fc-line" pathLength="1" style="--d:7" x1="260" y1="680" x2="260" y2="704" marker-end="url(#ah)"/>
+          <line class="fc-line" pathLength="1" style="--d:8" x1="260" y1="780" x2="260" y2="800" marker-end="url(#ah)"/>
+          <line class="fc-line" pathLength="1" style="--d:9" x1="370" y1="844" x2="458" y2="844" marker-end="url(#ah)"/>
+          <line class="fc-line" pathLength="1" style="--d:9" x1="260" y1="886" x2="260" y2="914" marker-end="url(#ah)"/>
+          <line class="fc-line" pathLength="1" style="--d:10" x1="260" y1="990" x2="260" y2="1024" marker-end="url(#ah)"/>
+          <path class="fc-line" pathLength="1" style="--d:10" d="M260,1006 H575 V1024" marker-end="url(#ah)"/>
+        </g>
+        <text class="fc-yn" x="392" y="222">No</text>
+        <text class="fc-yn" x="270" y="290">Yes</text>
+        <text class="fc-yn" x="400" y="428">No</text>
+        <text class="fc-yn" x="270" y="496">Yes</text>
+        <text class="fc-yn" x="402" y="836">No</text>
+        <text class="fc-yn" x="270" y="906">Yes</text>
+
+        <g class="node" data-id="leads" style="--d:0" tabindex="0" role="button" aria-label="Pull leads from Apollo">
+          <rect class="fc-act" x="110" y="20" width="300" height="58" rx="8"/>
+          <text class="fc-b" x="260" y="45">Pull leads from Apollo</text>
+          <text class="fc-o" x="260" y="65">Pavithra / Chrispin</text>
+        </g>
+        <g class="node" data-id="mail" style="--d:1" tabindex="0" role="button" aria-label="Email campaign">
+          <rect class="fc-mail" x="460" y="20" width="230" height="58" rx="8"/>
+          <text class="fc-ts" x="575" y="44">Same list: verify in Bouncer,</text>
+          <text class="fc-ts" x="575" y="63">then campaign in Brevo</text>
+        </g>
+        <g class="node" data-id="call" style="--d:1" tabindex="0" role="button" aria-label="Call the lead on Skyfall">
+          <rect class="fc-act" x="110" y="110" width="300" height="58" rx="8"/>
+          <text class="fc-b" x="260" y="135">Call the lead on Skyfall</text>
+          <text class="fc-o" x="260" y="155">Pavithra / Chrispin</text>
+        </g>
+        <g class="node" data-id="d1" style="--d:2" tabindex="0" role="button" aria-label="Decision: picked up and interested?">
+          <polygon class="fc-dec" points="260,190 350,230 260,270 170,230"/>
+          <text class="fc-b" x="260" y="226">Picked up and</text>
+          <text class="fc-b" x="260" y="243">interested?</text>
+        </g>
+        <g class="node" data-id="nopick" style="--d:3" tabindex="0" role="button" aria-label="Not picked up or not interested">
+          <rect class="fc-side" x="460" y="202" width="230" height="56" rx="8"/>
+          <text class="fc-ts" x="575" y="225">Stays in Apollo. Disposition</text>
+          <text class="fc-ts" x="575" y="244">and recording in Skyfall.</text>
+        </g>
+        <g class="node" data-id="enter" style="--d:3" tabindex="0" role="button" aria-label="Enter in HubSpot by hand">
+          <rect class="fc-hub" x="110" y="300" width="300" height="74" rx="8"/>
+          <text class="fc-t" x="260" y="325">Enter in HubSpot by hand: company,</text>
+          <text class="fc-t" x="260" y="344">contact, deal in MQL, call note.</text>
+          <text class="fc-o" x="260" y="364">Pavithra / Chrispin</text>
+        </g>
+        <g class="node" data-id="d2" style="--d:4" tabindex="0" role="button" aria-label="Decision: discovery booked?">
+          <polygon class="fc-dec" points="260,396 365,436 260,476 155,436"/>
+          <text class="fc-b" x="260" y="441">Discovery booked?</text>
+        </g>
+        <g class="node" data-id="nodisc" style="--d:5" tabindex="0" role="button" aria-label="Discovery not booked">
+          <rect class="fc-side" x="460" y="404" width="230" height="64" rx="8"/>
+          <text class="fc-ts" x="575" y="426">Follow-up call task.</text>
+          <text class="fc-ts" x="575" y="444">No interest: Cold or</text>
+          <text class="fc-ts" x="575" y="461">Closed Lost.</text>
+        </g>
+        <g class="node" data-id="booked" style="--d:5" tabindex="0" role="button" aria-label="Discovery booked: move deal to SQL">
+          <rect class="fc-hub" x="110" y="506" width="300" height="74" rx="8"/>
+          <text class="fc-t" x="260" y="531">Move deal to SQL. Send email and</text>
+          <text class="fc-t" x="260" y="550">invite, cc Vaishnavi and Felix.</text>
+          <text class="fc-o" x="260" y="570">Pavithra / Chrispin</text>
+        </g>
+        <g class="node" data-id="disc" style="--d:6" tabindex="0" role="button" aria-label="Discovery meeting">
+          <rect class="fc-hub" x="110" y="606" width="300" height="74" rx="8"/>
+          <text class="fc-t" x="260" y="631">Discovery meeting. Log the note,</text>
+          <text class="fc-t" x="260" y="650">set tasks, deal to Follow Up.</text>
+          <text class="fc-o" x="260" y="670">Vaishnavi</text>
+        </g>
+        <g class="node" data-id="fu" style="--d:7" tabindex="0" role="button" aria-label="Follow-ups">
+          <rect class="fc-act" x="110" y="706" width="300" height="74" rx="8"/>
+          <text class="fc-t" x="260" y="731">Follow-ups: requirements, proposal,</text>
+          <text class="fc-t" x="260" y="750">sign-off. cc Vaishnavi and Felix.</text>
+          <text class="fc-o" x="260" y="770">Pavithra / Chrispin</text>
+        </g>
+        <g class="node" data-id="d3" style="--d:8" tabindex="0" role="button" aria-label="Decision: onboarding confirmed?">
+          <polygon class="fc-dec" points="260,802 370,844 260,886 150,844"/>
+          <text class="fc-b" x="260" y="840">Onboarding</text>
+          <text class="fc-b" x="260" y="857">confirmed?</text>
+        </g>
+        <g class="node" data-id="lost" style="--d:9" tabindex="0" role="button" aria-label="Onboarding not confirmed">
+          <rect class="fc-side" x="460" y="816" width="230" height="56" rx="8"/>
+          <text class="fc-ts" x="575" y="839">On-Hold, Cold or Closed Lost.</text>
+          <text class="fc-ts" x="575" y="858">Note the reason.</text>
+        </g>
+        <g class="node" data-id="live" style="--d:9" tabindex="0" role="button" aria-label="Deal to Live and onboarding meeting">
+          <rect class="fc-hub" x="110" y="916" width="300" height="74" rx="8"/>
+          <text class="fc-t" x="260" y="941">Deal to Live. Onboarding meeting</text>
+          <text class="fc-t" x="260" y="960">with Vaishnavi and product team.</text>
+          <text class="fc-o" x="260" y="980">Scheduled by Pavithra / Chrispin</text>
+        </g>
+        <g class="node" data-id="reviews" style="--d:10" tabindex="0" role="button" aria-label="Performance reviews">
+          <rect class="fc-act" x="110" y="1026" width="300" height="58" rx="8"/>
+          <text class="fc-t" x="260" y="1050">Reviews, bi-weekly or monthly</text>
+          <text class="fc-o" x="260" y="1070">Vaishnavi</text>
+        </g>
+        <g class="node" data-id="billing" style="--d:11" tabindex="0" role="button" aria-label="Billing follow-ups">
+          <rect class="fc-act" x="460" y="1026" width="230" height="58" rx="8"/>
+          <text class="fc-t" x="575" y="1050">Billing follow-ups</text>
+          <text class="fc-o" x="575" y="1070">Pavithra / Chrispin</text>
+        </g>
+
+        <!-- walkthrough marker -->
+        <g id="fc-dot" class="fc-dot" aria-hidden="true">
+          <circle class="fc-dot-ring" r="14"/>
+          <circle class="fc-dot-core" r="7"/>
+        </g>
+      </svg>
+    </div>
+
+    <aside class="fc-panel" id="fc-panel" aria-live="polite">
+      <div class="fc-controls">
+        <button type="button" class="btn btn-primary" id="fc-play"><span class="ico" aria-hidden="true">▶</span><span class="lbl">Play walkthrough</span></button>
+        <div class="stepper">
+          <button type="button" class="btn btn-icon" id="fc-prev" aria-label="Previous step">‹</button>
+          <span class="count" id="fc-count">1 / 12</span>
+          <button type="button" class="btn btn-icon" id="fc-next" aria-label="Next step">›</button>
+        </div>
+      </div>
+      <div class="fc-progress" aria-hidden="true"><span id="fc-progress-bar"></span></div>
+      <div class="fc-card" id="fc-card">
+        <span class="fc-kicker" id="fc-owner">Pavithra / Chrispin · Apollo</span>
+        <h3 id="fc-name">Pull leads from Apollo</h3>
+        <div class="fc-body" id="fc-body"><ul><li>Build the target list of D2C brands and decision makers.</li><li>The same list also goes to Bouncer and Brevo for the email campaign.</li></ul><p class="fc-hub-line"><b>In HubSpot:</b> nothing yet.</p></div>
+        <div class="fc-refs" id="fc-refs"></div>
+      </div>
+      <p class="fc-hint">Tap any box in the chart to see what happens there.</p>
+    </aside>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="flow">
+    <div class="sec-head">
+      <h2 id="flow">The workflow</h2>
+      <p>Each stage shows its owner and what goes into HubSpot. The letter tags point to the step-by-step instructions further down.</p>
+    </div>
+    <div class="timeline">
+      <div class="rail" aria-hidden="true"><span></span></div>
+      <div class="colhead"><span></span><span>Stage</span><span>Owner</span><span>In HubSpot</span></div>
+
+      <div class="phase">Prospecting</div>
+      <div class="row">
+        <span class="n">1</span>
+        <div class="stage"><b>Find leads</b><span>Pull target D2C brands and decision makers from Apollo. The same list also goes to the email campaign.</span></div>
+        <div class="owner"><span class="tag">Pavithra</span><span class="tag">Chrispin</span><span class="tag tool">Apollo</span></div>
+        <div class="hubcell"><span class="lbl">Nothing yet</span><ul><li>Leads live in Apollo until someone picks up.</li></ul></div>
+      </div>
+      <div class="row">
+        <span class="n">2</span>
+        <div class="stage"><b>Call leads</b><span>Call every lead and aim to book a discovery. Skyfall is not linked to HubSpot: every call's disposition and recording stay in Skyfall. If nobody picks up, or there is no interest, the lead stays in Apollo.</span></div>
+        <div class="owner"><span class="tag">Pavithra</span><span class="tag">Chrispin</span><span class="tag tool">Skyfall</span></div>
+        <div class="hubcell"><span class="lbl">No pickup or no interest</span><ul><li>Nothing in HubSpot. Disposition stays in Skyfall.</li></ul></div>
+      </div>
+      <div class="row">
+        <span class="n">3</span>
+        <div class="stage"><b>Interest shown on the call</b><span>With or without a discovery booked, the caller enters the brand into HubSpot by hand.</span></div>
+        <div class="owner"><span class="tag">Pavithra</span><span class="tag">Chrispin</span></div>
+        <div class="hubcell"><span class="lbl">Entered manually</span><ul><li>Create the company and the contact.</li><li>Create the deal in <strong>MQL</strong>.</li><li>Add a note with the call summary.</li><li>No discovery yet: set a follow-up call task.</li></ul><div class="refs"><a class="ref" href="#a">A</a><a class="ref" href="#b">B</a><a class="ref" href="#d">D</a><a class="ref" href="#c">C</a><a class="ref" href="#g">G</a></div></div>
+      </div>
+
+      <div class="phase">Discovery</div>
+      <div class="row">
+        <span class="n">4</span>
+        <div class="stage"><b>Discovery booked</b><span>Send the customer a confirmation email and calendar invite, with Vaishnavi and Felix copied on both.</span></div>
+        <div class="owner"><span class="tag">Pavithra</span><span class="tag">Chrispin</span></div>
+        <div class="hubcell"><span class="lbl">On booking</span><ul><li>Move the deal to <strong>SQL</strong>.</li><li>Log the email and meeting.</li></ul><div class="refs"><a class="ref" href="#e">E</a><a class="ref" href="#h">H</a></div></div>
+      </div>
+      <div class="row">
+        <span class="n">5</span>
+        <div class="stage"><b>Discovery meeting</b><span>Vaishnavi runs the discovery with the brand.</span></div>
+        <div class="owner"><span class="tag">Vaishnavi</span></div>
+        <div class="hubcell"><span class="lbl">Right after the meeting</span><ul><li>Log the outcome as a note.</li><li>Create follow-up tasks for Pavithra or Chrispin.</li><li>Move the deal stage.</li></ul><div class="refs"><a class="ref" href="#f">F</a><a class="ref" href="#g">G</a><a class="ref" href="#h">H</a></div></div>
+      </div>
+
+      <div class="phase">Close</div>
+      <div class="row">
+        <span class="n">6</span>
+        <div class="stage"><b>Follow-ups to onboarding confirmation</b><span>Requirements, proposal, pricing and sign-off, until the brand confirms onboarding. Vaishnavi and Felix are copied on every follow-up.</span></div>
+        <div class="owner"><span class="tag">Pavithra</span><span class="tag">Chrispin</span></div>
+        <div class="hubcell"><span class="lbl">Every follow-up</span><ul><li>Log each touch and set the next task.</li><li>Move the deal stage as it progresses.</li></ul><div class="refs"><a class="ref" href="#c">C</a><a class="ref" href="#g">G</a><a class="ref" href="#h">H</a></div></div>
+      </div>
+
+      <div class="phase">Onboard &amp; grow</div>
+      <div class="row">
+        <span class="n">7</span>
+        <div class="stage"><b>Onboarding meeting</b><span>Once onboarding is confirmed, the JE schedules an onboarding meeting for the brand with Vaishnavi and the product team only.</span></div>
+        <div class="owner"><span class="tag">Pavithra</span><span class="tag">Chrispin</span><span class="tag">Vaishnavi</span></div>
+        <div class="hubcell"><span class="lbl">On confirmation</span><ul><li>Move the deal to Live.</li><li>Set the contact and company to Customer.</li><li>Log the onboarding meeting.</li></ul><div class="refs"><a class="ref" href="#h">H</a><a class="ref" href="#i">I</a></div></div>
+      </div>
+      <div class="row">
+        <span class="n">8</span>
+        <div class="stage"><b>Performance reviews</b><span>Bi-weekly or monthly, depending on what the customer wants.</span></div>
+        <div class="owner"><span class="tag">Vaishnavi</span></div>
+        <div class="hubcell"><span class="lbl">Recurring</span><ul><li>Recurring review task on the company.</li><li>A note after each review.</li></ul><div class="refs"><a class="ref" href="#j">J</a></div></div>
+      </div>
+      <div class="row">
+        <span class="n">9</span>
+        <div class="stage"><b>Billing follow-ups</b><span>Invoices and payment reminders for live customers.</span></div>
+        <div class="owner"><span class="tag">Pavithra</span><span class="tag">Chrispin</span></div>
+        <div class="hubcell"><span class="lbl">Every cycle</span><ul><li>Billing task on the company, logged when done.</li></ul><div class="refs"><a class="ref" href="#k">K</a></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="stages">
+    <div class="sec-head">
+      <h2 id="stages">Which HubSpot deal stage to use</h2>
+      <p>These are the stages in our <strong>Deals pipeline</strong>. Move the deal as soon as the event in the second column happens. Tap a row to see it on the flowchart.</p>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Deal stage</th><th>Move the deal here when</th><th>Who moves it</th></tr></thead>
+        <tbody>
+          <tr data-node="enter"><td><code>MQL</code></td><td>The brand shows interest on the call and the deal is created, with or without a discovery booked (step 3).</td><td>Pavithra / Chrispin</td></tr>
+          <tr data-node="booked"><td><code>SQL</code></td><td>A discovery meeting is booked (step 4).</td><td>Pavithra / Chrispin</td></tr>
+          <tr data-node="disc"><td><code>Follow Up</code></td><td>Discovery is done and the brand is being followed up on next steps (step 5).</td><td>Vaishnavi</td></tr>
+          <tr data-node="fu"><td><code>Requirement Collection</code></td><td>The brand is sharing requirements for a proposal.</td><td>Pavithra / Chrispin</td></tr>
+          <tr data-node="fu"><td><code>Proposal Negotiation</code></td><td>Proposal or pricing has been sent and is being discussed.</td><td>Pavithra / Chrispin</td></tr>
+          <tr data-node="fu"><td><code>Positives To be Signed</code></td><td>The brand has said yes; sign-off is pending.</td><td>Pavithra / Chrispin</td></tr>
+          <tr data-node="live"><td><code>Live</code></td><td>Onboarding is confirmed (step 7).</td><td>Pavithra / Chrispin</td></tr>
+          <tr data-node="lost"><td><code>On-Hold</code> / <code>Cold</code></td><td>The brand pauses, or goes silent after the follow-up sequence.</td><td>Pavithra / Chrispin</td></tr>
+          <tr data-node="lost"><td><code>Closed Lost</code></td><td>The brand says no. Add the reason in a note.</td><td>Pavithra / Chrispin</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="howto">
+    <div class="sec-head">
+      <h2 id="howto">Step-by-step instructions</h2>
+      <p>Tap an action to open it. Every record gets an owner, and every task gets a due date.</p>
+    </div>
+    <div class="pb">
+
+      <details id="a">
+        <summary><span class="k">A</span><span class="t"><b>Create the company</b><small>Step 3 · Pavithra / Chrispin · as soon as a call shows interest</small></span><span class="chev" aria-hidden="true">›</span></summary>
+        <div class="body">
+          <ol>
+            <li>Search HubSpot for the brand name and website first, so you don't create a duplicate.</li>
+            <li>Go to <strong>CRM › Companies</strong> and click <strong>Create company</strong>.</li>
+            <li>Fill in the fields below and click <strong>Create</strong>.</li>
+          </ol>
+          <div class="fields">
+            <div>Company domain name</div><div>The brand's website, e.g. <code>brandname.com</code>. HubSpot uses this to avoid duplicates.</div>
+            <div>Company name</div><div>The brand name as customers know it.</div>
+            <div>Company owner</div><div>The person who made the call.</div>
+            <div>Product</div><div><code>Reward Rally</code></div>
+            <div>Type</div><div><code>Prospect</code></div>
+            <div>Industry</div><div>The closest match (cosmetics, apparel, jewelry, food and so on).</div>
+            <div>City / Country</div><div>Where the brand is based.</div>
+          </div>
+        </div>
+      </details>
+
+      <details id="b">
+        <summary><span class="k">B</span><span class="t"><b>Create the contact and link it to the company</b><small>Step 3 · Pavithra / Chrispin</small></span><span class="chev" aria-hidden="true">›</span></summary>
+        <div class="body">
+          <ol>
+            <li>Open the company record you just created.</li>
+            <li>In the right sidebar, find <strong>Contacts</strong> and click <strong>+ Add › Create new</strong>. Creating it from here links the contact to the company automatically.</li>
+            <li>Fill in the fields below and click <strong>Create</strong>.</li>
+            <li>Add any other person from the brand you spoke to, or who will attend discovery, the same way.</li>
+          </ol>
+          <div class="fields">
+            <div>Email</div><div>Work email from Apollo or from the call.</div>
+            <div>First name / Last name</div><div>As the person introduced themselves.</div>
+            <div>Phone number</div><div>The number you called on.</div>
+            <div>Job title</div><div>Founder, Marketing Head, E-commerce Manager and so on.</div>
+            <div>Contact owner</div><div>Same owner as the company.</div>
+            <div>Lifecycle stage</div><div><code>Marketing Qualified Lead</code></div>
+            <div>Lead status</div><div><code>Connected</code></div>
+          </div>
+        </div>
+      </details>
+
+      <details id="c">
+        <summary><span class="k">C</span><span class="t"><b>Add a note</b><small>Steps 3 to 9 · after every conversation</small></span><span class="chev" aria-hidden="true">›</span></summary>
+        <div class="body">
+          <ol>
+            <li>Open the <strong>company</strong> record (brand notes live on the company, so everyone sees the full history).</li>
+            <li>Click <strong>Notes › Create note</strong>.</li>
+            <li>Write the note using the format below.</li>
+            <li>Under <strong>Associated with</strong>, tick the contact and the deal (if there is one) so the note shows on all three records.</li>
+            <li>Click <strong>Create note</strong>.</li>
+          </ol>
+          <div class="template" id="tpl-note">Date / channel: [e.g. 29 Oct, Skyfall call]
+Spoke with: [name, role]
+What we learnt: [platform, order volume, current loyalty tool, pain points]
+What they want: [their ask in one line]
+Agreed next step: [what, who, by when]</div>
+          <button class="copy" type="button" data-copy="tpl-note">Copy note format</button>
+          <div class="tip"><b>Skyfall calls:</b> Skyfall is not linked to HubSpot, so nothing arrives automatically. The disposition and recording stay in Skyfall. In HubSpot, use <strong>Calls › Log call</strong> on the contact, pick the outcome and paste the summary. Include the call date and time so anyone can find the recording in Skyfall.</div>
+        </div>
+      </details>
+
+      <details id="d">
+        <summary><span class="k">D</span><span class="t"><b>Create the deal</b><small>Step 3 · Pavithra / Chrispin · on every call that shows interest</small></span><span class="chev" aria-hidden="true">›</span></summary>
+        <div class="body">
+          <ol>
+            <li>Open the company record.</li>
+            <li>In the right sidebar, find <strong>Deals</strong> and click <strong>+ Add › Create new</strong>. This links the deal to the company.</li>
+            <li>Fill in the fields below.</li>
+            <li>Under <strong>Associate deal with</strong>, add the contact(s) you spoke to.</li>
+            <li>Click <strong>Create</strong>. The deal now shows in the <code>MQL</code> column of the deals board.</li>
+            <li>If discovery was booked on the same call, go straight on to E and move the deal to <code>SQL</code>.</li>
+          </ol>
+          <div class="fields">
+            <div>Deal name</div><div>The brand name, e.g. <code>Sporto</code></div>
+            <div>Pipeline</div><div><code>Deals pipeline</code></div>
+            <div>Deal stage</div><div><code>MQL</code></div>
+            <div>Product</div><div><code>Reward Rally</code></div>
+            <div>Amount</div><div>Best estimate of the plan value. Update it after discovery.</div>
+            <div>Close date</div><div>Expected sign-off date. A month out if unknown.</div>
+            <div>Deal owner</div><div>The person who made the call.</div>
+          </div>
+        </div>
+      </details>
+
+      <details id="e">
+        <summary><span class="k">E</span><span class="t"><b>Discovery booked: move to SQL, send email and invite</b><small>Step 4 · Pavithra / Chrispin · copy Vaishnavi and Felix</small></span><span class="chev" aria-hidden="true">›</span></summary>
+        <div class="body">
+          <ol>
+            <li>Agree the date and time with the brand on the call.</li>
+            <li>In HubSpot, move the deal from <code>MQL</code> to <code>SQL</code> (see H). Set the contact's Lifecycle stage to <code>Sales Qualified Lead</code> and Lead status to <code>Open Deal</code>.</li>
+            <li>Send the calendar invite with the brand contact(s), <strong>Vaishnavi</strong> and <strong>Felix</strong> as guests. Title: <code>RewardRally discovery | Brand name</code>.</li>
+            <li>Send the confirmation email below to the brand, with Vaishnavi and Felix in <strong>CC</strong>.</li>
+            <li>Make sure both show on the HubSpot contact. If they do not appear automatically, log them with <strong>Email › Log email</strong> and <strong>Meetings › Log meeting</strong>.</li>
+            <li>Create a task for Vaishnavi on the deal: <code>Discovery: Brand name</code>, due on the meeting date (see G).</li>
+          </ol>
+          <div class="template" id="tpl-email">Subject: RewardRally discovery call | [Brand name], [Day, Date] at [Time]
+
+Hi [First name],
+
+Thanks for your time on the call today. As agreed, here are the details for our discovery session:
+
+Date and time: [Day, Date], [Time] IST
+Link: [meeting link] (calendar invite sent)
+Duration: [duration]
+
+Vaishnavi from our team will take you through how RewardRally works for Shopify brands like yours, and we would like to understand your customers, order volumes and what you want from a loyalty program.
+
+I've copied Vaishnavi and Felix here. If the time no longer works, just reply and we will move it.
+
+Regards,
+[Your name]
+RewardRally</div>
+          <button class="copy" type="button" data-copy="tpl-email">Copy email</button>
+        </div>
+      </details>
+
+      <details id="f">
+        <summary><span class="k">F</span><span class="t"><b>Log the discovery outcome</b><small>Step 5 · Vaishnavi · same day as the meeting</small></span><span class="chev" aria-hidden="true">›</span></summary>
+        <div class="body">
+          <ol>
+            <li>Open the deal. Click <strong>Meetings</strong> and set the meeting outcome to <code>Completed</code> (or <code>No show</code> / <code>Rescheduled</code>).</li>
+            <li>Add a note on the company (see C) with the discovery format below.</li>
+            <li>Move the deal from <code>SQL</code> to <code>Follow Up</code>, and update amount and close date (see H). Set the contact's Lifecycle stage to <code>Opportunity</code>.</li>
+            <li>Create the follow-up tasks for Pavithra or Chrispin (see G), one task per next step.</li>
+          </ol>
+          <div class="template" id="tpl-disc">Discovery: [Brand], [Date]
+Attendees: [names, roles]
+Store: [Shopify plan, monthly orders, AOV]
+Current loyalty setup: [none / tool name / issues]
+Goals: [repeat purchase, referrals, reviews and so on]
+Decision maker and process: [who signs, by when]
+Fit and recommended plan: [plan, price]
+Next steps: [what, owner, date]</div>
+          <button class="copy" type="button" data-copy="tpl-disc">Copy discovery format</button>
+        </div>
+      </details>
+
+      <details id="g">
+        <summary><span class="k">G</span><span class="t"><b>Create a task or reminder</b><small>Any step · everyone · every next action is a task</small></span><span class="chev" aria-hidden="true">›</span></summary>
+        <div class="body">
+          <ol>
+            <li>Open the deal (or the company if there is no deal yet) and click <strong>Tasks › Create task</strong>.</li>
+            <li>Fill in the fields below and click <strong>Create</strong>.</li>
+            <li>When the task is done, tick it complete and add a note (see C). Then create the next task. A deal should never be left without an open task.</li>
+          </ol>
+          <div class="tip"><b>Follow-up emails:</b> always copy Vaishnavi and Felix on every follow-up email to the brand.</div>
+          <div class="fields">
+            <div>Title</div><div>Verb first: <code>Send proposal: Brand</code>, <code>Follow up on pricing: Brand</code></div>
+            <div>Type</div><div><code>Call</code>, <code>Email</code> or <code>To-do</code></div>
+            <div>Due date and time</div><div>The day it must happen. Turn on a reminder.</div>
+            <div>Assigned to</div><div>The person doing it (follow-ups go to Pavithra or Chrispin).</div>
+            <div>Priority</div><div><code>High</code> for anything with a customer waiting.</div>
+            <div>Associated with</div><div>The deal, company and contact.</div>
+          </div>
+        </div>
+      </details>
+
+      <details id="h">
+        <summary><span class="k">H</span><span class="t"><b>Move the deal stage</b><small>Steps 5 to 7 · whoever owns the stage</small></span><span class="chev" aria-hidden="true">›</span></summary>
+        <div class="body">
+          <ol>
+            <li>Open the deal, or go to <strong>CRM › Deals</strong> in board view.</li>
+            <li>Change <strong>Deal stage</strong> (or drag the card) using the stage table above.</li>
+            <li>Update <strong>Amount</strong> and <strong>Close date</strong> whenever they change.</li>
+            <li>For <code>Closed Lost</code>, <code>Cold</code> or <code>On-Hold</code>, add a note saying why.</li>
+          </ol>
+        </div>
+      </details>
+
+      <details id="i">
+        <summary><span class="k">I</span><span class="t"><b>Schedule the onboarding meeting</b><small>Step 7 · Pavithra / Chrispin</small></span><span class="chev" aria-hidden="true">›</span></summary>
+        <div class="body">
+          <ol>
+            <li>Agree a time with the brand, Vaishnavi and the product team.</li>
+            <li>Send the calendar invite: <code>RewardRally onboarding | Brand name</code>, with the brand contacts, Vaishnavi and the product team only.</li>
+            <li>In HubSpot, move the deal to <code>Live</code> and set Lifecycle stage to <code>Customer</code> on both the contact and the company.</li>
+            <li>Log the meeting on the deal and add a note with plan, price and start date.</li>
+            <li>Create the first billing task (see K) and the first review task for Vaishnavi (see J).</li>
+          </ol>
+        </div>
+      </details>
+
+      <details id="j">
+        <summary><span class="k">J</span><span class="t"><b>Set up performance reviews</b><small>Step 8 · Vaishnavi · bi-weekly or monthly</small></span><span class="chev" aria-hidden="true">›</span></summary>
+        <div class="body">
+          <ol>
+            <li>Ask the customer whether they want reviews every two weeks or every month.</li>
+            <li>On the company, create a task <code>Performance review: Brand</code> assigned to Vaishnavi, and set it to <strong>Repeat</strong> every 2 weeks or every month.</li>
+            <li>After each review, add a note: key numbers shared, customer feedback, actions agreed.</li>
+          </ol>
+        </div>
+      </details>
+
+      <details id="k">
+        <summary><span class="k">K</span><span class="t"><b>Billing follow-ups</b><small>Step 9 · Pavithra / Chrispin</small></span><span class="chev" aria-hidden="true">›</span></summary>
+        <div class="body">
+          <ol>
+            <li>On the company, create a repeating task <code>Billing: Brand</code> on the billing date, assigned to the JE.</li>
+            <li>When the invoice is sent, add a note with the invoice number and amount.</li>
+            <li>If unpaid after the due date, create a <code>Call</code> task for the next day and note every reminder sent.</li>
+          </ol>
+        </div>
+      </details>
+
+      <details id="l">
+        <summary><span class="k">L</span><span class="t"><b>Daily HubSpot review</b><small>Everyone · start of every day</small></span><span class="chev" aria-hidden="true">›</span></summary>
+        <div class="body">
+          <ol>
+            <li>Go to <strong>CRM › Tasks</strong> and open the <strong>Due today</strong> and <strong>Overdue</strong> views, filtered to <strong>Assigned to: me</strong>.</li>
+            <li>Work through them top to bottom. Click <strong>Start tasks</strong> to go through them one after another.</li>
+            <li>After each one: mark it complete, add a note, and create the next task.</li>
+            <li>Before logging off, check that every open deal you own has a future task.</li>
+          </ol>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="split">
+    <div class="panel mailp" aria-labelledby="mail">
+      <h2 id="mail">Email campaigns</h2>
+      <div class="mini-flow">
+        <div class="chip"><b>Apollo</b><span>Same lead list</span></div>
+        <span class="to" aria-hidden="true">→</span>
+        <div class="chip"><b>Bouncer</b><span>Verify the list</span></div>
+        <span class="to" aria-hidden="true">→</span>
+        <div class="chip"><b>Brevo</b><span>Run the campaign</span></div>
+      </div>
+      <p class="note">The lead list pulled for calling is also verified in Bouncer and then sent as a campaign from Brevo, to keep bounces low.</p>
+    </div>
+    <div class="panel warnp" aria-labelledby="rules">
+      <h2 id="rules">House rules</h2>
+      <ul>
+        <li>No pickup or no interest: no HubSpot record. The disposition stays in Skyfall.</li>
+        <li>Every interested call gets a company, contact and MQL deal, entered by hand.</li>
+        <li>Search before you create. No duplicate companies or contacts.</li>
+        <li>No open deal without a future task.</li>
+        <li>Notes go on the company, associated to the contact and deal.</li>
+        <li>Vaishnavi and Felix are on every discovery invite and every follow-up.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>RewardRally, Peninsular Research Operations. Sales workflow as of October 2026.</footer>
+</div>
+
+<button type="button" class="totop" id="totop" aria-label="Back to top">↑</button>
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------- Hero: pause SMIL motion for reduced motion ---------- */
+  var hero = $('#hero-svg');
+  if (hero && reduce && hero.pauseAnimations) { try { hero.pauseAnimations(); } catch (e) {} }
+
+  /* ---------- Copy buttons ---------- */
+  $$('.copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var el = document.getElementById(btn.getAttribute('data-copy'));
+      var text = el.innerText;
+      var orig = btn.getAttribute('data-label') || btn.textContent;
+      btn.setAttribute('data-label', orig);
+      var done = function () { btn.textContent = 'Copied ✓'; setTimeout(function () { btn.textContent = orig; }, 1600); };
+      var fallback = function () {
+        var r = document.createRange(); r.selectNodeContents(el);
+        var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        btn.textContent = 'Selected, press Ctrl+C';
+        setTimeout(function () { btn.textContent = orig; }, 2400);
+      };
+      try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
+    });
+  });
+
+  /* ---------- Animated details (accordion) ---------- */
+  function animateOpen(d, open) {
+    if (reduce || !d.animate) { d.open = open; return Promise.resolve(); }
+    var sum = $('summary', d);
+    var start = d.offsetHeight;
+    if (open) d.open = true;
+    var end = open ? d.scrollHeight : sum.offsetHeight + 2;
+    var anim = d.animate([{ height: start + 'px' }, { height: end + 'px' }], { duration: 320, easing: 'cubic-bezier(.2,.7,.2,1)' });
+    return new Promise(function (res) {
+      anim.onfinish = function () { if (!open) d.open = false; res(); };
+    });
+  }
+  $$('details').forEach(function (d) {
+    var sum = $('summary', d);
+    sum.addEventListener('click', function (e) { e.preventDefault(); animateOpen(d, !d.open); });
+  });
+  function goToCard(id) {
+    var d = document.getElementById(id);
+    if (!d) return;
+    var show = function () {
+      d.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      d.classList.remove('flash'); void d.offsetWidth; d.classList.add('flash');
+    };
+    if (!d.open) animateOpen(d, true).then(show); else show();
+  }
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a.ref, .fc-refs a');
+    if (!a) return;
+    var id = (a.getAttribute('href') || '').replace('#', '');
+    if (document.getElementById(id) && document.getElementById(id).tagName === 'DETAILS') { e.preventDefault(); goToCard(id); }
+  });
+
+  /* ---------- Reveal on scroll ---------- */
+  var revealTargets = $$('.sec-head, .person, .row, .phase, .tablewrap, details, .panel, .fc-legend, .hero-band');
+  revealTargets.forEach(function (el, i) { el.classList.add('rv'); });
+  $$('.person').forEach(function (el, i) { el.style.setProperty('--rd', (i * 0.08) + 's'); });
+  $$('details').forEach(function (el, i) { el.style.setProperty('--rd', Math.min(i * 0.04, .3) + 's'); });
+  if ('IntersectionObserver' in window && !reduce) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          var r = en.boundingClientRect;
+          if (r.top > window.innerHeight * 0.15) en.target.classList.add('in');
+          io.unobserve(en.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    revealTargets.forEach(function (el) {
+      var r = el.getBoundingClientRect();
+      if (r.top > window.innerHeight) io.observe(el);
+    });
+  }
+
+  /* ---------- Scroll progress, scrollspy, timeline rail, back to top ---------- */
+  var fill = $('#scrollbar-fill');
+  var links = $$('.navlinks a');
+  var spyIds = links.map(function (a) { return a.getAttribute('data-spy'); });
+  var timeline = $('.timeline');
+  var railFill = $('.rail span');
+  var rows = $$('.timeline .row');
+  var totop = $('#totop');
+  var ticking = false;
+  function onScroll() {
+    ticking = false;
+    var doc = document.documentElement;
+    var max = doc.scrollHeight - window.innerHeight;
+    var p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+    if (fill) fill.style.transform = 'scaleX(' + p + ')';
+    var current = spyIds[0];
+    spyIds.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el && el.getBoundingClientRect().top < 140) current = id;
+    });
+    links.forEach(function (a) {
+      var on = a.getAttribute('data-spy') === current;
+      if (on !== a.classList.contains('active')) {
+        a.classList.toggle('active', on);
+        if (on && a.scrollIntoView && window.innerWidth < 640) { try { a.scrollIntoView({ block: 'nearest', inline: 'center' }); } catch (e) {} }
+      }
+    });
+    if (timeline && railFill) {
+      var tr = timeline.getBoundingClientRect();
+      var line = window.innerHeight * 0.6;
+      var tp = Math.min(1, Math.max(0, (line - tr.top - 40) / Math.max(1, tr.height - 60)));
+      railFill.style.transform = 'scaleY(' + tp + ')';
+      rows.forEach(function (row) {
+        var n = $('.n', row);
+        row.classList.toggle('lit', n.getBoundingClientRect().top + 14 < line);
+      });
+    }
+    if (totop) totop.classList.toggle('show', window.scrollY > 700);
+  }
+  window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
+  window.addEventListener('resize', onScroll);
+  onScroll();
+  if (totop) totop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); });
+
+  /* ---------- Interactive flowchart ---------- */
+  var svg = $('#fc-svg');
+  if (!svg) return;
+  var N = {
+    leads: { name: 'Pull leads from Apollo', owner: 'Pavithra / Chrispin · Apollo', at: [88, 49],
+      body: ['Build the target list of D2C brands and decision makers.', 'The same list also goes to Bouncer and Brevo for the email campaign.'], hub: 'Nothing yet.', refs: [] },
+    mail: { name: 'Email campaign', owner: 'Email track · Bouncer + Brevo', at: [444, 49],
+      body: ['Take the same Apollo lead list.', 'Verify it in Bouncer to keep bounces low.', 'Run the campaign from Brevo.'], hub: null, refs: [['mail', 'Email campaigns']] },
+    call: { name: 'Call the lead on Skyfall', owner: 'Pavithra / Chrispin · Skyfall', at: [88, 139],
+      body: ['Call every lead and aim to book a discovery.', 'Skyfall keeps every disposition and recording. It is not linked to HubSpot.'], hub: 'Nothing yet.', refs: [] },
+    d1: { name: 'Picked up and interested?', owner: 'Decision · on the call', at: [148, 230],
+      yes: 'Enter the brand into HubSpot by hand.', no: 'The lead stays in Apollo. The disposition and recording stay in Skyfall.', refs: [] },
+    nopick: { name: 'No pickup or no interest', owner: 'Outcome', at: [444, 230],
+      body: ['Nothing goes into HubSpot.', 'The lead stays in Apollo to call again later.', 'The disposition and recording stay in Skyfall.'], hub: null, refs: [] },
+    enter: { name: 'Enter in HubSpot by hand', owner: 'Pavithra / Chrispin', at: [88, 337],
+      body: ['Interest shown, with or without a discovery booked.'], hub: 'Create the company, the contact and a deal in MQL. Log the call with its date and time.', refs: [['a', 'A · Company'], ['b', 'B · Contact'], ['d', 'D · Deal'], ['c', 'C · Note']] },
+    d2: { name: 'Discovery booked?', owner: 'Decision', at: [133, 436],
+      yes: 'Move the deal to SQL and send the email and invite.', no: 'Set a follow-up call task. If there is no interest, move the deal to Cold or Closed Lost.', refs: [['g', 'G · Task'], ['h', 'H · Stage']] },
+    nodisc: { name: 'Discovery not booked yet', owner: 'Outcome · Pavithra / Chrispin', at: [444, 436],
+      body: ['Create a follow-up call task with a due date.', 'No interest after follow-ups: move to Cold or Closed Lost with a note.'], hub: null, refs: [['g', 'G · Task'], ['h', 'H · Stage']] },
+    booked: { name: 'Discovery booked', owner: 'Pavithra / Chrispin', at: [88, 543],
+      body: ['Send the confirmation email and calendar invite.', 'Copy Vaishnavi and Felix on both.'], hub: 'Move the deal to SQL. Contact lifecycle: Sales Qualified Lead. Log the email and meeting.', refs: [['e', 'E · Email + invite'], ['h', 'H · Stage']] },
+    disc: { name: 'Discovery meeting', owner: 'Vaishnavi', at: [88, 643],
+      body: ['Vaishnavi runs the discovery with the brand.'], hub: 'Set the meeting outcome, add the discovery note, create follow-up tasks for Pavithra or Chrispin, and move the deal to Follow Up.', refs: [['f', 'F · Discovery note'], ['g', 'G · Task'], ['h', 'H · Stage']] },
+    fu: { name: 'Follow-ups', owner: 'Pavithra / Chrispin', at: [88, 743],
+      body: ['Requirements, proposal, pricing and sign-off.', 'Copy Vaishnavi and Felix on every follow-up email.'], hub: 'Log each touch, set the next task, and move the deal through Requirement Collection, Proposal Negotiation and Positives To be Signed.', refs: [['c', 'C · Note'], ['g', 'G · Task'], ['h', 'H · Stage']] },
+    d3: { name: 'Onboarding confirmed?', owner: 'Decision', at: [128, 844],
+      yes: 'The deal goes Live and the onboarding meeting is scheduled.', no: 'Move to On-Hold, Cold or Closed Lost, with the reason in a note.', refs: [['h', 'H · Stage']] },
+    lost: { name: 'Not confirmed', owner: 'Outcome · Pavithra / Chrispin', at: [444, 844],
+      body: ['Move the deal to On-Hold, Cold or Closed Lost.', 'Always add a note saying why.'], hub: null, refs: [['h', 'H · Stage']] },
+    live: { name: 'Go live and onboard', owner: 'Scheduled by Pavithra / Chrispin', at: [88, 953],
+      body: ['Onboarding meeting with the brand, Vaishnavi and the product team only.'], hub: 'Move the deal to Live, set Lifecycle to Customer on the contact and company, and create the first review and billing tasks.', refs: [['i', 'I · Onboarding'], ['h', 'H · Stage']] },
+    reviews: { name: 'Performance reviews', owner: 'Vaishnavi', at: [88, 1055],
+      body: ['Bi-weekly or monthly, as the customer prefers.'], hub: 'Repeating review task on the company, and a note after each review.', refs: [['j', 'J · Reviews']] },
+    billing: { name: 'Billing follow-ups', owner: 'Pavithra / Chrispin', at: [444, 1055],
+      body: ['Invoices and payment reminders for live customers.'], hub: 'Repeating billing task on the company. Note the invoice number and every reminder.', refs: [['k', 'K · Billing']] }
+  };
+  var path = ['leads', 'call', 'd1', 'enter', 'd2', 'booked', 'disc', 'fu', 'd3', 'live', 'reviews', 'billing'];
+  var nodes = {};
+  $$('.node', svg).forEach(function (g) { nodes[g.getAttribute('data-id')] = g; });
+  var dot = $('#fc-dot');
+  var card = $('#fc-card'), nameEl = $('#fc-name'), ownerEl = $('#fc-owner'), bodyEl = $('#fc-body'), refsEl = $('#fc-refs');
+  var countEl = $('#fc-count'), barEl = $('#fc-progress-bar'), playBtn = $('#fc-play');
+  var idx = 0, timer = null, current = 'leads';
+
+  function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+  function render(id) {
+    var n = N[id]; if (!n) return;
+    ownerEl.textContent = n.owner;
+    nameEl.textContent = n.name;
+    var h = '';
+    if (n.yes) {
+      h += '<div class="fc-branch"><div class="yes"><b>Yes:</b> ' + esc(n.yes) + '</div><div class="no"><b>No:</b> ' + esc(n.no) + '</div></div>';
+    } else {
+      h += '<ul>' + n.body.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>';
+      if (n.hub) h += '<p class="fc-hub-line"><b>In HubSpot:</b> ' + esc(n.hub) + '</p>';
+    }
+    bodyEl.innerHTML = h;
+    refsEl.innerHTML = n.refs.map(function (r) { return '<a href="#' + r[0] + '">' + esc(r[1]) + '</a>'; }).join('');
+    card.classList.remove('swap'); void card.offsetWidth; card.classList.add('swap');
+  }
+  function select(id, opts) {
+    opts = opts || {};
+    current = id;
+    Object.keys(nodes).forEach(function (k) {
+      nodes[k].classList.toggle('on', k === id);
+      nodes[k].classList.toggle('dim', !!opts.dim && k !== id && path.indexOf(k) === -1);
+    });
+    var n = N[id];
+    if (dot && n) { dot.style.transform = 'translate(' + n.at[0] + 'px,' + n.at[1] + 'px)'; dot.classList.add('show'); }
+    var pi = path.indexOf(id);
+    if (pi > -1) idx = pi;
+    countEl.textContent = (pi > -1 ? (pi + 1) : '·') + ' / ' + path.length;
+    barEl.style.width = ((pi > -1 ? pi + 1 : idx + 1) / path.length * 100) + '%';
+    render(id);
+    if (opts.scroll && nodes[id]) {
+      var r = nodes[id].getBoundingClientRect();
+      if (r.top < 90 || r.bottom > window.innerHeight * 0.55) {
+        var y = window.scrollY + r.top - window.innerHeight * 0.3;
+        window.scrollTo({ top: y, behavior: reduce ? 'auto' : 'smooth' });
+      }
+    }
+  }
+  function stop() {
+    if (timer) { clearInterval(timer); timer = null; }
+    $('.ico', playBtn).textContent = '▶';
+    $('.lbl', playBtn).textContent = idx >= path.length - 1 ? 'Replay walkthrough' : 'Play walkthrough';
+  }
+  function play() {
+    if (idx >= path.length - 1) idx = -1;
+    $('.ico', playBtn).textContent = '❚❚';
+    $('.lbl', playBtn).textContent = 'Pause';
+    var step = function () {
+      if (idx >= path.length - 1) { stop(); return; }
+      idx++; select(path[idx], { scroll: true, dim: true });
+    };
+    step();
+    timer = setInterval(step, reduce ? 3500 : 2600);
+  }
+  playBtn.addEventListener('click', function () { if (timer) stop(); else play(); });
+  $('#fc-next').addEventListener('click', function () { stop(); var i = path.indexOf(current); select(path[Math.min(path.length - 1, (i > -1 ? i : idx) + 1)], { scroll: true }); });
+  $('#fc-prev').addEventListener('click', function () { stop(); var i = path.indexOf(current); select(path[Math.max(0, (i > -1 ? i : idx) - 1)], { scroll: true }); });
+  Object.keys(nodes).forEach(function (k) {
+    var g = nodes[k];
+    g.addEventListener('click', function () { stop(); select(k); });
+    g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); stop(); select(k); } });
+  });
+  select('leads');
+
+  /* Chart entrance when it first scrolls into view */
+  if ('IntersectionObserver' in window && !reduce) {
+    var r0 = svg.getBoundingClientRect();
+    if (r0.top > window.innerHeight * 0.8) {
+      var cio = new IntersectionObserver(function (en) {
+        if (en[0].isIntersecting) { svg.classList.add('play'); cio.disconnect(); }
+      }, { threshold: 0.15 });
+      cio.observe(svg);
+    }
+  }
+
+  /* Stage table rows jump to the matching flowchart box */
+  $$('tbody tr[data-node]').forEach(function (tr) {
+    tr.setAttribute('tabindex', '0');
+    var go = function () {
+      var id = tr.getAttribute('data-node');
+      stop(); select(id);
+      var r = nodes[id].getBoundingClientRect();
+      window.scrollTo({ top: window.scrollY + r.top - window.innerHeight * 0.3, behavior: reduce ? 'auto' : 'smooth' });
+    };
+    tr.addEventListener('click', go);
+    tr.addEventListener('keydown', function (e) { if (e.key === 'Enter') go(); });
+  });
+})();
+</script>
