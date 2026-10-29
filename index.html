@@ -302,6 +302,46 @@ summary .chev { display: inline-block; transition: transform .3s cubic-bezier(.2
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ===== Phone flowchart + collapsible panel ===== */
+.mflow { display: none; list-style: none; margin: 0; padding: 0; gap: 26px; }
+.mf { position: relative; display: grid; gap: 4px; padding: 12px 14px; border-radius: 10px; border: 1.5px solid var(--muted); background: var(--surface); cursor: pointer; outline: none; transition: border-color .25s, box-shadow .25s, transform .2s, opacity .3s; }
+.mf b { font-family: var(--f-display); font-weight: 600; font-size: 15px; line-height: 1.3; }
+.mf > span:not(.mf-o):not(.mf-yes) { font-size: 13.5px; color: var(--ink); }
+.mf-o { font-family: var(--f-mono); font-size: 11.5px; color: var(--accent); }
+.mf.hub { background: var(--hub-soft); border-color: var(--hub); }
+.mf.dec { background: var(--accent-soft); border-color: var(--accent); border-style: dashed; }
+.mf.dec > b::before { content: "◆ "; color: var(--accent); }
+.mf:not(:last-child)::after { content: ""; position: absolute; left: 50%; bottom: -24px; width: 2px; height: 20px; background: var(--muted); transform: translateX(-50%); }
+.mf:not(:last-child)::before { content: ""; position: absolute; left: 50%; bottom: -26px; width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: translateX(-50%) rotate(45deg); }
+.mf-yes { position: absolute; left: calc(50% + 10px); bottom: -22px; font-family: var(--f-mono); font-size: 11px; color: var(--mail); }
+.mf-side { margin-top: 6px; border-radius: 8px; padding: 8px 10px; font-size: 13px; background: var(--bg); border: 1.2px dashed var(--muted); display: flex; gap: 8px; align-items: baseline; cursor: pointer; outline: none; transition: border-color .25s, box-shadow .25s; }
+.mf-side.mail { background: var(--mail-soft); border: 1.2px solid var(--mail); }
+.mf-tag { flex: none; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.mf-side.mail .mf-tag { color: var(--mail); }
+.mf:hover, .mf:focus-visible, .mf-side:hover, .mf-side:focus-visible { border-color: var(--accent); }
+.mf.on, .mf-side.on { border-color: var(--accent); border-style: solid; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent), 0 10px 22px -14px color-mix(in srgb, var(--accent) 60%, transparent); }
+.mf.on { transform: scale(1.015); }
+.mf.dim { opacity: .5; }
+
+.fc-toggle { display: none; }
+.fc-mini { display: none; font-size: 13px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 640px) {
+  .hb-l { font-size: 30px; }
+  .hb-s { display: none; }
+  .hero-band { padding: 12px 8px 6px; }
+  .fcwrap, .fc-legend { display: none; }
+  .mflow { display: grid; }
+  .fc-panel { padding: 10px 12px; gap: 8px; border-radius: 14px; max-height: 55vh; }
+  .fc-toggle { display: inline-flex; }
+  .fc-controls { flex-wrap: nowrap; }
+  .fc-controls .lbl { display: none; }
+  .fc-controls .btn-primary { width: 36px; height: 36px; padding: 0; justify-content: center; }
+  .fc-panel.collapsed .fc-card, .fc-panel.collapsed .fc-hint, .fc-panel.collapsed .fc-progress { display: none; }
+  .fc-panel.collapsed .fc-mini { display: block; flex: 1; }
+  .fc-panel.collapsed { box-shadow: 0 10px 30px -12px color-mix(in srgb, var(--ink) 55%, transparent); }
+}
 </style>
 
 <nav class="topnav" aria-label="Sections">
@@ -500,14 +540,62 @@ summary .chev { display: inline-block; transition: transform .3s cubic-bezier(.2
       </svg>
     </div>
 
+    <ol class="mflow" aria-label="Flowchart, phone layout">
+      <li class="mf act" data-id="leads" tabindex="0" role="button">
+        <b>Pull leads from Apollo</b><span class="mf-o">Pavithra / Chrispin</span>
+        <div class="mf-side mail" data-id="mail" tabindex="0" role="button"><span class="mf-tag">Also</span>Same list: verify in Bouncer, then campaign in Brevo</div>
+      </li>
+      <li class="mf act" data-id="call" tabindex="0" role="button">
+        <b>Call the lead on Skyfall</b><span class="mf-o">Pavithra / Chrispin</span>
+      </li>
+      <li class="mf dec" data-id="d1" tabindex="0" role="button">
+        <b>Picked up and interested?</b>
+        <div class="mf-side no" data-id="nopick" tabindex="0" role="button"><span class="mf-tag">No</span>Stays in Apollo. Disposition and recording in Skyfall.</div>
+        <span class="mf-yes">Yes</span>
+      </li>
+      <li class="mf hub" data-id="enter" tabindex="0" role="button">
+        <b>Enter in HubSpot by hand</b><span>Company, contact, deal in MQL, call note.</span><span class="mf-o">Pavithra / Chrispin</span>
+      </li>
+      <li class="mf dec" data-id="d2" tabindex="0" role="button">
+        <b>Discovery booked?</b>
+        <div class="mf-side no" data-id="nodisc" tabindex="0" role="button"><span class="mf-tag">No</span>Follow-up call task. No interest: Cold or Closed Lost.</div>
+        <span class="mf-yes">Yes</span>
+      </li>
+      <li class="mf hub" data-id="booked" tabindex="0" role="button">
+        <b>Move deal to SQL</b><span>Send email and invite, cc Vaishnavi and Felix.</span><span class="mf-o">Pavithra / Chrispin</span>
+      </li>
+      <li class="mf hub" data-id="disc" tabindex="0" role="button">
+        <b>Discovery meeting</b><span>Log the note, set tasks, deal to Follow Up.</span><span class="mf-o">Vaishnavi</span>
+      </li>
+      <li class="mf act" data-id="fu" tabindex="0" role="button">
+        <b>Follow-ups</b><span>Requirements, proposal, sign-off. cc Vaishnavi and Felix.</span><span class="mf-o">Pavithra / Chrispin</span>
+      </li>
+      <li class="mf dec" data-id="d3" tabindex="0" role="button">
+        <b>Onboarding confirmed?</b>
+        <div class="mf-side no" data-id="lost" tabindex="0" role="button"><span class="mf-tag">No</span>On-Hold, Cold or Closed Lost. Note the reason.</div>
+        <span class="mf-yes">Yes</span>
+      </li>
+      <li class="mf hub" data-id="live" tabindex="0" role="button">
+        <b>Deal to Live, onboarding meeting</b><span>With Vaishnavi and the product team.</span><span class="mf-o">Scheduled by Pavithra / Chrispin</span>
+      </li>
+      <li class="mf act" data-id="reviews" tabindex="0" role="button">
+        <b>Performance reviews</b><span>Bi-weekly or monthly.</span><span class="mf-o">Vaishnavi</span>
+      </li>
+      <li class="mf act" data-id="billing" tabindex="0" role="button">
+        <b>Billing follow-ups</b><span>Invoices and payment reminders.</span><span class="mf-o">Pavithra / Chrispin</span>
+      </li>
+    </ol>
+
     <aside class="fc-panel" id="fc-panel" aria-live="polite">
       <div class="fc-controls">
         <button type="button" class="btn btn-primary" id="fc-play"><span class="ico" aria-hidden="true">▶</span><span class="lbl">Play walkthrough</span></button>
+        <span class="fc-mini" id="fc-mini">Pull leads from Apollo</span>
         <div class="stepper">
           <button type="button" class="btn btn-icon" id="fc-prev" aria-label="Previous step">‹</button>
           <span class="count" id="fc-count">1 / 12</span>
           <button type="button" class="btn btn-icon" id="fc-next" aria-label="Next step">›</button>
         </div>
+        <button type="button" class="btn btn-icon fc-toggle" id="fc-toggle" aria-expanded="true" aria-label="Hide details">▾</button>
       </div>
       <div class="fc-progress" aria-hidden="true"><span id="fc-progress-bar"></span></div>
       <div class="fc-card" id="fc-card">
@@ -1035,7 +1123,22 @@ Next steps: [what, owner, date]</div>
   };
   var path = ['leads', 'call', 'd1', 'enter', 'd2', 'booked', 'disc', 'fu', 'd3', 'live', 'reviews', 'billing'];
   var nodes = {};
-  $$('.node', svg).forEach(function (g) { nodes[g.getAttribute('data-id')] = g; });
+  $$('[data-id]').forEach(function (el) { var k = el.getAttribute('data-id'); (nodes[k] = nodes[k] || []).push(el); });
+  var phoneMQ = window.matchMedia ? window.matchMedia('(max-width: 640px)') : { matches: false };
+  function visibleEl(id) {
+    var list = nodes[id] || [];
+    for (var i = 0; i < list.length; i++) { if (list[i].getBoundingClientRect().width > 0) return list[i]; }
+    return list[0];
+  }
+  var panel = $('#fc-panel'), toggle = $('#fc-toggle'), mini = $('#fc-mini');
+  function setCollapsed(c) {
+    if (!panel) return;
+    panel.classList.toggle('collapsed', c);
+    if (toggle) { toggle.textContent = c ? '▴' : '▾'; toggle.setAttribute('aria-expanded', String(!c)); toggle.setAttribute('aria-label', c ? 'Show details' : 'Hide details'); }
+  }
+  if (toggle) toggle.addEventListener('click', function () { setCollapsed(!panel.classList.contains('collapsed')); });
+  if (phoneMQ.matches) setCollapsed(true);
+  function expandOnPhone() { if (phoneMQ.matches) setCollapsed(false); }
   var dot = $('#fc-dot');
   var card = $('#fc-card'), nameEl = $('#fc-name'), ownerEl = $('#fc-owner'), bodyEl = $('#fc-body'), refsEl = $('#fc-refs');
   var countEl = $('#fc-count'), barEl = $('#fc-progress-bar'), playBtn = $('#fc-play');
@@ -1046,6 +1149,7 @@ Next steps: [what, owner, date]</div>
     var n = N[id]; if (!n) return;
     ownerEl.textContent = n.owner;
     nameEl.textContent = n.name;
+    if (mini) mini.textContent = n.name;
     var h = '';
     if (n.yes) {
       h += '<div class="fc-branch"><div class="yes"><b>Yes:</b> ' + esc(n.yes) + '</div><div class="no"><b>No:</b> ' + esc(n.no) + '</div></div>';
@@ -1061,8 +1165,10 @@ Next steps: [what, owner, date]</div>
     opts = opts || {};
     current = id;
     Object.keys(nodes).forEach(function (k) {
-      nodes[k].classList.toggle('on', k === id);
-      nodes[k].classList.toggle('dim', !!opts.dim && k !== id && path.indexOf(k) === -1);
+      nodes[k].forEach(function (el) {
+        el.classList.toggle('on', k === id);
+        el.classList.toggle('dim', !!opts.dim && k !== id && path.indexOf(k) === -1);
+      });
     });
     var n = N[id];
     if (dot && n) { dot.style.transform = 'translate(' + n.at[0] + 'px,' + n.at[1] + 'px)'; dot.classList.add('show'); }
@@ -1072,9 +1178,10 @@ Next steps: [what, owner, date]</div>
     barEl.style.width = ((pi > -1 ? pi + 1 : idx + 1) / path.length * 100) + '%';
     render(id);
     if (opts.scroll && nodes[id]) {
-      var r = nodes[id].getBoundingClientRect();
-      if (r.top < 90 || r.bottom > window.innerHeight * 0.55) {
-        var y = window.scrollY + r.top - window.innerHeight * 0.3;
+      var r = visibleEl(id).getBoundingClientRect();
+      var limit = phoneMQ.matches ? 0.4 : 0.55;
+      if (r.top < 90 || r.bottom > window.innerHeight * limit) {
+        var y = window.scrollY + r.top - window.innerHeight * (phoneMQ.matches ? 0.15 : 0.3);
         window.scrollTo({ top: y, behavior: reduce ? 'auto' : 'smooth' });
       }
     }
@@ -1095,13 +1202,22 @@ Next steps: [what, owner, date]</div>
     step();
     timer = setInterval(step, reduce ? 3500 : 2600);
   }
-  playBtn.addEventListener('click', function () { if (timer) stop(); else play(); });
-  $('#fc-next').addEventListener('click', function () { stop(); var i = path.indexOf(current); select(path[Math.min(path.length - 1, (i > -1 ? i : idx) + 1)], { scroll: true }); });
-  $('#fc-prev').addEventListener('click', function () { stop(); var i = path.indexOf(current); select(path[Math.max(0, (i > -1 ? i : idx) - 1)], { scroll: true }); });
-  Object.keys(nodes).forEach(function (k) {
-    var g = nodes[k];
-    g.addEventListener('click', function () { stop(); select(k); });
-    g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); stop(); select(k); } });
+  playBtn.addEventListener('click', function () { if (timer) stop(); else { expandOnPhone(); play(); } });
+  $('#fc-next').addEventListener('click', function () { stop(); expandOnPhone(); var i = path.indexOf(current); select(path[Math.min(path.length - 1, (i > -1 ? i : idx) + 1)], { scroll: true }); });
+  $('#fc-prev').addEventListener('click', function () { stop(); expandOnPhone(); var i = path.indexOf(current); select(path[Math.max(0, (i > -1 ? i : idx) - 1)], { scroll: true }); });
+  function pick(e) {
+    var el = e.target.closest && e.target.closest('[data-id]');
+    if (!el) return;
+    stop(); expandOnPhone(); select(el.getAttribute('data-id'));
+  }
+  [svg, $('.mflow')].forEach(function (root) {
+    if (!root) return;
+    root.addEventListener('click', pick);
+    root.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      var el = e.target.closest && e.target.closest('[data-id]');
+      if (el && el === e.target) { e.preventDefault(); stop(); expandOnPhone(); select(el.getAttribute('data-id')); }
+    });
   });
   select('leads');
 
@@ -1121,8 +1237,8 @@ Next steps: [what, owner, date]</div>
     tr.setAttribute('tabindex', '0');
     var go = function () {
       var id = tr.getAttribute('data-node');
-      stop(); select(id);
-      var r = nodes[id].getBoundingClientRect();
+      stop(); expandOnPhone(); select(id);
+      var r = visibleEl(id).getBoundingClientRect();
       window.scrollTo({ top: window.scrollY + r.top - window.innerHeight * 0.3, behavior: reduce ? 'auto' : 'smooth' });
     };
     tr.addEventListener('click', go);
